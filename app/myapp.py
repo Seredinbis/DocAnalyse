@@ -44,7 +44,7 @@ def delete_doc(doc_id: int):
     return {"message": "Документы успешно удалены"}
 
 
-@app.post("/doc_analyse", description=des.Analyse.description, summary=des.Analyse.summary)
+@app.patch("/doc_analyse", description=des.Analyse.description, summary=des.Analyse.summary)
 def analyse_doc(doc_id: str):
     doc_analyse_queue(doc_id)
     return {"message": "Запрос выполнен"}
