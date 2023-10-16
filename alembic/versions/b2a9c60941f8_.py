@@ -24,7 +24,7 @@ def upgrade() -> None:
                                  sa.Column('psth', sa.String(100), nullable=False),
                                  sa.Column('date', sa.Date(), nullable=False))
     op.create_table('Documents_text', sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
-                                      sa.Column('id_doc', sa.Integer(), sa.ForeignKey('Documents.id')),
+                                      sa.Column('id_doc', sa.Integer(), sa.ForeignKey('Documents.id', ondelete='CASCADE')),
                                       sa.Column('text', sa.Text(), nullable=False))
     # ### end Alembic commands ###
 

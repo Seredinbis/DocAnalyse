@@ -1,0 +1,81 @@
+version: '3.7'
+services:
+  db:
+    image: postgres:14.8
+    container_name: app_db
+    env_file:
+      - .env
+    ports:
+      - "4444:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}", "-h", "${DB_IP}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 7
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    expose:
+      - 5432
+
+  rabbitmq:
+    image: rabbitmq:3.12.6
+    container_name: rabbitmq_app
+    env_file:
+      - .env
+    ports:
+      - "12345:15672"
+      - "1234:5672"
+    hostname: rabbit
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 30s
+      timeout: 30s
+      retries: 10
+    expose:
+      - 15672
+      - 5672
+
+  celery:
+    build:
+      context: .
+      dockerfile: DockerfileCelery
+    container_name: celery_app
+    working_dir: /fastapi_app
+    env_file:
+      - .env
+    volumes:
+      - /Users/antonseredin/Desktop/PYTHON/FastAPI/Documents/mydata:/docs
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  fast_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    container_name: fastapi_app
+    command:
+      - "/fastapi_app/docker/app.sh"
+    ports:
+      - "9000:8000"
+    expose:
+      - 8000
+    volumes:
+      - /Users/antonseredin/Desktop/PYTHON/FastAPI/Documents/mydata:/docs
+    depends_on:
+      db:
+        condition: service_healthy
+
+  concumer:
+    build:
+      context: .
+      dockerfile: DockerfileConcumer
+    container_name: concumer
+    env_file:
+      - .env
+    depends_on:
+      - celery
