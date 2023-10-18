@@ -4,8 +4,8 @@ import config_data.descriptions as des
 from fastapi import FastAPI, UploadFile
 from sql.psql import connect, Document, DocumentText
 from datetime import datetime as dt
-from rabbit.producer import doc_analyse_queue
 from config_data.config import load_config
+from celery_module.tasks import doc_analyse
 
 app = FastAPI(title='ЗАДАЧА ОТ ДЕНИСА', description='ВОТ ТАКАЯ ВОТ ЗАДАЧА ВОТ ТАКАЯ')
 
@@ -46,8 +46,8 @@ def delete_doc(doc_id: int):
 
 @app.patch("/doc_analyse", description=des.Analyse.description, summary=des.Analyse.summary)
 def analyse_doc(doc_id: str):
-    doc_analyse_queue(doc_id)
-    return {"message": "Запрос выполнен"}
+    a = doc_analyse.delay(doc_id)
+    return {"message": a}
 
 
 @app.get('/get_text', description=des.Text.description, summary=des.Text.summary)

@@ -20,13 +20,13 @@ services:
       - 5432
 
   rabbitmq:
-    image: rabbitmq:3.12.6
+    image: rabbitmq:3.12.6-management
     container_name: rabbitmq_app
     env_file:
       - .env
     ports:
-      - "12345:15672"
-      - "1234:5672"
+      - "15672:15672"
+      - "5672:5672"
     hostname: rabbit
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
@@ -69,13 +69,3 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-  concumer:
-    build:
-      context: .
-      dockerfile: DockerfileConcumer
-    container_name: concumer
-    env_file:
-      - .env
-    depends_on:
-      - celery
