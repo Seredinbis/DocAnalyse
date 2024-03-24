@@ -5,8 +5,6 @@ from celery_module.celery_setup import app
 from sql.psql import connect, DocumentText, Document
 from PIL import Image
 
-
-
 # получение пользовательского логгера и установка уровня логирования
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
