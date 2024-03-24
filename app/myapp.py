@@ -4,21 +4,20 @@ import config_data.descriptions as des
 from fastapi import FastAPI, UploadFile
 from sql.psql import connect, Document, DocumentText
 from datetime import datetime as dt
-from rabbit.producer import doc_analyse_queue
 from config_data.config import load_config
+from celery_module.tasks import doc_analyse
+from loguru import logger
 
-app = FastAPI(title='ЗАДАЧА ОТ ДЕНИСА', description='ВОТ ТАКАЯ ВОТ ЗАДАЧА ВОТ ТАКАЯ')
+app = FastAPI(title='api for upload and analyse docs')
 
 abspath = os.path.abspath('../.env')
 
-
-@app.get('/', description=des.Root.description, summary=des.Root.summary)
-async def root():
-    return {'message': 'КОРЕНЬ НАХ'}
+logger.add("./logs/myapp.log", format="{time} {level} {message}", level="INFO")
 
 
 @app.post("/upload_doc", description=des.Upload.description, summary=des.Upload.summary)
 def upload_doc(file: UploadFile):
+    logger.info("Попытка загрузки документа")
     file_path = load_config(abspath).doc_path.path + file.filename
     with open(file_path, "wb") as f:
         f.write(file.file.read())
@@ -26,6 +25,7 @@ def upload_doc(file: UploadFile):
     with connect() as ses:
         ses.add(Document(psth=file_path, date=dt.now().date()))
         ses.commit()
+    logger.info("Документ успешно загружен")
     return {"message": "Документы успешно скачены"}
 
 
@@ -46,8 +46,8 @@ def delete_doc(doc_id: int):
 
 @app.patch("/doc_analyse", description=des.Analyse.description, summary=des.Analyse.summary)
 def analyse_doc(doc_id: str):
-    doc_analyse_queue(doc_id)
-    return {"message": "Запрос выполнен"}
+    doc_analyse.delay(doc_id)
+    return {"message": "OK"}
 
 
 @app.get('/get_text', description=des.Text.description, summary=des.Text.summary)

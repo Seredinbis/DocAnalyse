@@ -20,13 +20,13 @@ services:
       - 5432
 
   rabbitmq:
-    image: rabbitmq:3.12.6
+    image: rabbitmq:3.12.6-management
     container_name: rabbitmq_app
     env_file:
       - .env
     ports:
-      - "12345:15672"
-      - "1234:5672"
+      - "15672:15672"
+      - "5672:5672"
     hostname: rabbit
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
@@ -38,6 +38,7 @@ services:
       - 5672
 
   celery:
+    image: celery-app
     build:
       context: .
       dockerfile: DockerfileCelery
@@ -47,11 +48,16 @@ services:
       - .env
     volumes:
       - /Users/antonseredin/Desktop/PYTHON/FastAPI/Documents/mydata:/docs
+    ports:
+      - "3333:3333"
     depends_on:
       rabbitmq:
         condition: service_healthy
+    expose:
+      - 3333
 
-  fast_app:
+  fast-app:
+    image: fast-app
     build:
       context: .
       dockerfile: Dockerfile
@@ -70,12 +76,37 @@ services:
       db:
         condition: service_healthy
 
-  concumer:
-    build:
-      context: .
-      dockerfile: DockerfileConcumer
-    container_name: concumer
-    env_file:
-      - .env
-    depends_on:
-      - celery
+#  elastic:
+#    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+#    container_name: elasticsearch-container
+#    ports:
+#      - "9200:9200"
+#      - "9300:9300"
+#    environment:
+#      - discovery.type=single-node
+#
+#  logstash:
+#    image: docker.elastic.co/logstash/logstash
+#    container_name: logstash
+#    ports:
+#      - "5044:5044"
+#    volumes:
+#      - /logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+#    depends_on:
+#      - elastic
+#
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana
+#    container_name: kibana
+#    ports:
+#      - "5601:5601"
+#    depends_on:
+#      - elastic
+#
+#  filebeat:
+#    image: docker.elastic.co/filebeat/filebeat
+#    volumes:
+#      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+#      - /logs:/logs
+#    depends_on:
+#      - logstash
