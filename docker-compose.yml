@@ -4,7 +4,7 @@ services:
     image: postgres:14.8
     container_name: app_db
     env_file:
-      - .env
+      - ../.env
     ports:
       - "4444:5432"
     healthcheck:
@@ -23,7 +23,7 @@ services:
     image: rabbitmq:3.12.6-management
     container_name: rabbitmq_app
     env_file:
-      - .env
+      - ../.env
     ports:
       - "15672:15672"
       - "5672:5672"
@@ -38,25 +38,27 @@ services:
       - 5672
 
   celery:
+    image: celery-app
     build:
-      context: .
-      dockerfile: DockerfileCelery
+      context: ..
+      dockerfile: ../DockerfileCelery
     container_name: celery_app
     working_dir: /fastapi_app
     env_file:
-      - .env
+      - ../.env
     volumes:
       - /Users/antonseredin/Desktop/PYTHON/FastAPI/Documents/mydata:/docs
     depends_on:
       rabbitmq:
         condition: service_healthy
 
-  fast_app:
+  fast-app:
+    image: fast-app
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: ../Dockerfile
     env_file:
-      - .env
+      - ../.env
     container_name: fastapi_app
     command:
       - "/fastapi_app/docker/app.sh"
